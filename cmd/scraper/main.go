@@ -12,7 +12,7 @@ func main() {
 	// Route / to handler function
 	e.GET("/health-check", handlers.HealthCheck)
 	// get notification to send
-	go handlers.scraper()
+	go handlers.Scraper()
 	// start the server, and log if it fails
 	e.Logger.Fatal(e.Start(":8080"))
 }
