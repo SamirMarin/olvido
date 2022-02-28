@@ -33,18 +33,21 @@ func Connect(user, pass, host, port, database string) (*Client, error) {
 		port = "27017"
 	}
 
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/?maxPoolSize=20&w=majority", user, pass, host, port)
+	//uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/?maxPoolSize=20&w=majority", user, pass, host, port)
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/", user, pass, host, port)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		return &Client{}, err
 	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			//return &Client{}, err
-			panic(err)
-		}
-	}()
+	//TODO make sure we disconnect from db when done, needs to be moved to where connections are made
+	//defer func() {
+	//	if err = client.Disconnect(context.TODO()); err != nil {
+	//		//return &Client{}, err
+	//		panic(err)
+	//	}
+	//}()
+
 	// Ping the primary
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		return &Client{}, err
@@ -57,12 +60,12 @@ func Connect(user, pass, host, port, database string) (*Client, error) {
 	}, nil
 }
 
-func orderDoc(doc interface{}) interface{} {
+func OrderDoc(doc bson.D) interface{} {
 	return bson.D(doc)
 }
 
 func (c *Client) InsertManyDocs(docs []interface{}) error {
-	coll := c.Connection.Database(m.Database).Collection(m.Collection)
+	coll := c.Connection.Database(c.Database).Collection(c.Collection)
 
 	result, err := coll.InsertMany(context.TODO(), docs)
 	if err != nil {

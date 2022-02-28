@@ -36,7 +36,7 @@ func Scraper() {
 			Message: "Don't forget to study for your lsat",
 		},
 	}
-	err := model.InsertNotifications(mongoClient, notifications)
+	err = model.InsertNotifications(mongoClient, notifications)
 	if err != nil {
 		log.Fatalf("Failed to insert notifications with given err: %s", err.Error())
 	}

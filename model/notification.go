@@ -6,27 +6,27 @@ import (
 )
 
 type Notification struct {
-	Time    int64
-	Medium  string
-	Address string
-	Messege string
+	Time    int64  `bson:"time"`
+	Medium  string `bson:"medium"`
+	Address string `bson:"address"`
+	Message string `bson:"message"`
 }
 
-func InsertNotifications(client mongo.Client, monnotifications []Notification) error {
-	// consider not tying the collection here
+func InsertNotifications(client *mongo.Client, notifications []Notification) error {
+	// consider not tying the collection to this function
 	collection := "reminder"
 
 	docs := []interface{}{}
 
 	for _, notification := range notifications {
-		orderDoc := mongo.orderDoc(notification)
-		docs = append(orderDoc, docs)
+		//orderDoc := mongo.OrderDoc(notification)
+		docs = append(docs, notification)
 	}
 	client.Collection = collection
 	err := client.InsertManyDocs(docs)
 
 	if err != nil {
-		return nil
+		return err
 	}
 	fmt.Printf("Number of notifications inserted: %d\n", len(notifications))
 
