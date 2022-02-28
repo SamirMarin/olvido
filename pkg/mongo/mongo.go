@@ -60,10 +60,6 @@ func Connect(user, pass, host, port, database string) (*Client, error) {
 	}, nil
 }
 
-func OrderDoc(doc bson.D) interface{} {
-	return bson.D(doc)
-}
-
 func (c *Client) InsertManyDocs(docs []interface{}) error {
 	coll := c.Connection.Database(c.Database).Collection(c.Collection)
 
@@ -73,5 +69,54 @@ func (c *Client) InsertManyDocs(docs []interface{}) error {
 	}
 
 	fmt.Printf("Number of documents inserted: %d\n", len(result.InsertedIDs))
+	return nil
+}
+
+func TimeRangeFilter(start int64, end int64) interface{} {
+	filter := bson.D{
+		{"$and",
+			bson.A{
+				bson.D{{"time", bson.D{{"$gt", start}}}},
+				bson.D{{"time", bson.D{{"$lt", end}}}},
+			}},
+	}
+	return filter
+}
+
+func (c *Client) FindDocsWithFilter(filter interface{}) ([][]byte, error) {
+	coll := c.Connection.Database(c.Database).Collection(c.Collection)
+	//TODO consider a projection decoupled form notifications mongo should not know about notifications
+	//projection := bson.D{{"time", 1}, {"medium", 1}, {"message", 1}, {"_id", 0}}
+	opts := options.Find() //.SetProjection(projection)
+	cursor, err := coll.Find(context.TODO(), filter, opts)
+	if err != nil {
+		return [][]byte{}, err
+	}
+
+	var results []bson.D
+	err = cursor.All(context.TODO(), &results)
+	if err != nil {
+		return [][]byte{}, err
+	}
+
+	marshalled := [][]byte{}
+
+	for _, result := range results {
+		doc, err := bson.Marshal(result)
+		if err != nil {
+			return [][]byte{}, err
+		}
+		marshalled = append(marshalled, doc)
+	}
+
+	return marshalled, nil
+}
+
+func UnmarshalBosonD(doc []byte, returnItem interface{}) error {
+	err := bson.Unmarshal(doc, returnItem)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
