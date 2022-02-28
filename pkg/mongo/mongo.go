@@ -5,16 +5,19 @@ import (
 	"errors"
 	"fmt"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Client struct {
-	connection *mongo.Client
+	Connection *mongo.Client
+	Database   string
+	Collection string
 }
 
-func Connect(user, pass, host, port string) (*Client, error) {
+func Connect(user, pass, host, port, database string) (*Client, error) {
 	if user == "" {
 		return &Client{}, errors.New("mongo user was empty")
 	}
@@ -49,6 +52,23 @@ func Connect(user, pass, host, port string) (*Client, error) {
 	fmt.Println(fmt.Sprintf("Successfully connected and pinged: %s.", uri))
 
 	return &Client{
-		connection: client,
+		Connection: client,
+		Database:   database,
 	}, nil
+}
+
+func orderDoc(doc interface{}) interface{} {
+	return bson.D(doc)
+}
+
+func (c *Client) InsertManyDocs(docs []interface{}) error {
+	coll := c.Connection.Database(m.Database).Collection(m.Collection)
+
+	result, err := coll.InsertMany(context.TODO(), docs)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Number of documents inserted: %d\n", len(result.InsertedIDs))
+	return nil
 }
